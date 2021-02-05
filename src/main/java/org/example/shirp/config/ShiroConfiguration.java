@@ -6,9 +6,15 @@ import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.session.mgt.SessionManager;
+import org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator;
+import org.apache.shiro.session.mgt.eis.SessionIdGenerator;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
+import org.example.shirp.constant.ShiroConstants;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +70,37 @@ public class ShiroConfiguration {
   public DefaultWebSecurityManager securityManager(CustomRealm customRealm) {
     DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
     securityManager.setRealm(customRealm);
+    securityManager.setSessionManager(sessionManager());
     return securityManager;
+  }
+
+  @Bean
+  public SimpleCookie simpleCookie() {
+    SimpleCookie simpleCookie = new SimpleCookie(ShiroConstants.SHARD_SESSION_ID);
+    simpleCookie.setHttpOnly(true);
+    simpleCookie.setMaxAge(180);
+    simpleCookie.setPath("/");
+    return simpleCookie;
+  }
+
+  @Bean
+  public SessionIdGenerator sessionIdGenerator() {
+    return new JavaUuidSessionIdGenerator();
+  }
+
+  @Bean
+  public RedisSessionDAO redisSessionDAO() {
+    RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
+    redisSessionDAO.setSessionIdGenerator(sessionIdGenerator());
+    return redisSessionDAO;
+  }
+
+  @Bean
+  public SessionManager sessionManager() {
+    DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
+    sessionManager.setSessionDAO(redisSessionDAO());
+    sessionManager.setSessionIdCookie(simpleCookie());
+    return sessionManager;
   }
 
   @Bean
@@ -86,7 +122,7 @@ public class ShiroConfiguration {
     //对所有用户认证
     map.put("/user/login", "anon");
     map.put("/user/logout", "logout");
-    map.put("/**", "authc");
+    map.put("/**", "anon");
     shiroFilterFactoryBean.setFilterChainDefinitionMap(map);
     return shiroFilterFactoryBean;
   }

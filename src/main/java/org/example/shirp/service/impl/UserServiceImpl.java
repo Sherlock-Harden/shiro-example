@@ -20,7 +20,7 @@ public class UserServiceImpl implements UserService {
         .id((long) username.length())
         .username(username)
         .nickname("nickname")
-        .password(new Md5Hash("123456", ByteSource.Util.bytes(ShiroConstants.CREDENTIALS_SALT)).toString())
+        .password(new Md5Hash("demoData", ByteSource.Util.bytes(ShiroConstants.CREDENTIALS_SALT)).toString())
         .build();
   }
 }

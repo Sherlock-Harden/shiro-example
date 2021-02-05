@@ -11,4 +11,6 @@ public interface ShiroConstants {
    */
   String CREDENTIALS_SALT = "盐值";
 
+  String SHARD_SESSION_ID = "shard_session_id";
+
 }
